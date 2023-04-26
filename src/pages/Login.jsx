@@ -3,15 +3,27 @@ import { Container, Stack, TextField, Button, Typography } from "@mui/material"
 import { Link, useNavigate } from "react-router-dom"
 import { gql, useMutation} from '@apollo/client';
 import useAuth from "../hooks/useAuth";
+import { useDispatch } from "react-redux";
+import { get_data } from "../redux/reducers/authReducer";
 
+
+// const LOGIN_USER = gql `
+//     mutation LoginUser ($input: loginUser!) {
+//         loginUser (input: $input) @rest(type: "User", method: "POST", path: "api/auth/login" ){
+//             user
+//             token
+//         }
+//     }
+// `
 const LOGIN_USER = gql `
-    mutation LoginUser ($input: loginUser!) {
-        loginUser (input: $input) @rest(type: "User", method: "POST", path: "api/auth/login" ){
-            user
-            token
-        }
+    mutation Mutation($loginInput: LoginInput) {
+      loginUser(loginInput: $loginInput) {
+        username,
+        token
     }
+  }
 `
+
 
 const Login = () => {
 
@@ -21,10 +33,11 @@ const Login = () => {
   const [password, setPassword] = useState('');
   const [alert, setAlert] = useState('');
 
-  const {auth, setAuth} = useAuth();
+  const dispatch = useDispatch()
+  // const {auth, setAuth} = useAuth();
 
   const[loginUser, {loading,error,data}] = useMutation(LOGIN_USER,{
-    variables: {input: {
+    variables: {loginInput: {
         email,
         password
     }},
@@ -33,7 +46,8 @@ const Login = () => {
     },
     onCompleted(data) {
       localStorage.setItem('token', data.loginUser.token);
-      setAuth(data)
+      dispatch(get_data(data))
+      // setAuth(data)
       navigate("/dashboard")
     },
   })
@@ -45,7 +59,7 @@ const Login = () => {
       setAlert("All fields required");
       return;
     }
-    loginUser()
+    loginUser();
     setAlert('');
   }
 

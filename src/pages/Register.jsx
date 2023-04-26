@@ -1,16 +1,13 @@
 import { useState } from "react"
 import { Link } from "react-router-dom"
-import { Container, Stack, TextField, Button, Typography} from "@mui/material"
+import { Container, Stack, TextField, Button, Typography, Input} from "@mui/material"
 import { gql, useMutation} from '@apollo/client';
 import { useNavigate } from "react-router-dom";
 
-
 const REGISTER_USER = gql `
-    mutation RegisterUser ($input: registerUser!) {
-        registerUser (input: $input) @rest(type: "User", method: "POST", path: "api/users/" ){
+    mutation Mutation($registerInput: RegisterInput) {
+        registerUser(registerInput: $registerInput) {
             username
-            email
-            password
         }
     }
 `
@@ -21,44 +18,51 @@ const Register = () => {
     const [username, setUsername] = useState('');
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
-    const [repeatPassword, setRepeatPassword] = useState('');
+    const [confirmPassword, setConfirmPassword] = useState('');
+    const [image, setImage] = useState('');
     const [alert, setAlert] = useState('');
 
     const[registerUser] = useMutation(REGISTER_USER,{
-        variables: {input: {
+        variables: {registerInput: {
             username,
             email,
-            password
+            password,
+            confirmPassword
+            
         }},
         onError(graphQLErrors){
-            setAlert(graphQLErrors.networkError.result.msg);
+            console.log(graphQLErrors);
+        },
+        onCompleted(){
+            console.log("yey")
         }
     })
 
     const handleSubmit = (e) => {
         e.preventDefault();
 
-        if([username, email, password, repeatPassword].includes('')){
+        if([username, email, password, confirmPassword].includes('')){
             setAlert("All fields required");
             return;
         }
 
-        if(password !== repeatPassword) {
-            setAlert("Passwords are not the same");
-            return;
-        }
+        // if(password !== confirmPassword) {
+        //     setAlert("Passwords are not the same");
+        //     return;
+        // }
 
-        if(password.length < 6) {
-            setAlert("Password must have 6 characters length min");
-            return;
-        }
+        // if(password.length < 6) {
+        //     setAlert("Password must have 6 characters length min");
+        //     return;
+        // }
         registerUser();
 
         setAlert('');
         setUsername('');
         setEmail('');
+        setImage('');
         setPassword('');
-        setRepeatPassword('');
+        setConfirmPassword('');
     }
 
   return (
@@ -101,12 +105,18 @@ const Register = () => {
                             type="password"
                         />
                         <TextField
-                            label="Repeat password"
-                            name="repeatpassword"
-                            value={repeatPassword}
-                            onChange={e => setRepeatPassword(e.target.value)}
+                            label="Confirm password"
+                            name="confirmpassword"
+                            value={confirmPassword}
+                            onChange={e => setConfirmPassword(e.target.value)}
                             type="password"
                         />
+                        {/* <Input
+                            laber="Avatar"
+                            name="avatar"
+                            onChange={e => setImage(e.target.files[0])}
+                            type="File"
+                        ></Input> */}
                     </Stack>
                     <Button variant="contained" type="submit">Sign up</Button>
                 </form>

@@ -1,6 +1,9 @@
 import {useState, useEffect, createContext } from 'react';
 import { gql, useLazyQuery } from '@apollo/client';
 import { useNavigate } from 'react-router-dom';
+import { useDispatch } from 'react-redux';
+import { get_data } from '../redux/reducers/authReducer';
+import { get_loading} from '../redux/reducers/loadingReducer';
 
 // const query = gql`
 //   query User{
@@ -12,35 +15,51 @@ import { useNavigate } from 'react-router-dom';
 //   }
 // `;
 
+// const ME_USER = gql `
+//     query MeUser {
+//         meUser @rest (path: "api/users/me") {
+//             username
+//             email
+//             user_id
+//         }
+//     }
+// `
 const ME_USER = gql `
-    query MeUser {
-        meUser @rest (path: "api/users/me") {
-            username
+    query Query ($profileInput: ProfileInput){
+        profileUser (profileInput: $profileInput){
             email
-            user_id
+            username
         }
     }
 `
+
+
 
 const AuthContext = createContext();
 
 const AuthProvider = ({children}) => {
 
+    
     const navigate = useNavigate()
-    const [auth, setAuth] = useState({})
-    const [loadingUser, setLoadingUser] = useState(true);
+    const dispatch = useDispatch(); //HERE
+    // const [auth, setAuth] = useState({})
+    // const [loadingUser, setLoadingUser] = useState(true);
 
 
-    const [meUser, {loading,error,data}] = useLazyQuery(ME_USER,{
-        context:{
-            headers: {authorization: `Bearer ${localStorage.getItem('token')}`}
-        },
+    const [profileUser, {loading,error,data}] = useLazyQuery(ME_USER,{
+        variables: {profileInput: {
+            token: localStorage.getItem('token')
+        }},
         onError(error){
-            setAuth({});
+            console.log(error)
+            dispatch(get_data({}))
+            // setAuth({});
         },
         onCompleted(data) {
-            setAuth(data)
-            setLoadingUser(false);
+            dispatch(get_data(data))
+            // setAuth(data)
+            dispatch(get_loading(false))
+            // setLoadingUser(false);
             navigate('dashboard')
         },
     })
@@ -50,25 +69,26 @@ const AuthProvider = ({children}) => {
         const authUser = async () => {
             const token = localStorage.getItem('token');
             if (!token) {
-                setLoadingUser(false)
+                dispatch(get_loading(false))
+                // setLoadingUser(false)
                 return
             }
 
-            meUser()
+            profileUser()
         }
         authUser();
     }, []);
 
     return (
-        <AuthContext.Provider
+        <div
             value={{
-                auth,
-                setAuth,
-                loadingUser
+                // auth,
+                // setAuth,
+                // loadingUser
             }}
         >
             {children}
-        </AuthContext.Provider>
+        </div>
     )
 }
 
@@ -76,4 +96,5 @@ export {
     AuthProvider
 }
 
-export default AuthContext
+// <AuthContext.Provider></AuthContext.Provider>
+// export default AuthContext
